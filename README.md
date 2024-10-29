@@ -31,7 +31,7 @@ There is a mechanical mechanism that moves a ground contact as the door opens an
 ## Obstuction Sensor Signal
 
 ## Door Close Button
-Grounding the Door Close signal is basically pushing the door button.  When programming, however, it is important to remember that if you hold the signal to ground for too long (2 seconds?), the GDO will ignore the state of the obstruction sensor.  This can be dangerous, so it is essential to "pulse" the Door Close signal for 1/3 to 2/3 seconds.
+Grounding the Door Close signal is basically pushing the door button.  When programming, however, it is important to remember that if you hold the signal to ground for too long while closing (2 seconds?), the GDO will ignore the state of the obstruction sensor.  This can be dangerous, so it is essential to "pulse" the Door Close signal for 1/3 to 2/3 seconds.
 
 In this project, I use hardware to limit the Door Close time to about 450 msec.  
 
