@@ -29,6 +29,10 @@ Buzzing out the board, I found all the proper places to connect, and just solder
 There is a mechanical mechanism that moves a ground contact as the door opens and closes.  When the contact meets the Open contact, the Open Limit signal goes to zero and the logic stops the motor.  Likewise for the Close contact.  These three wires come in the bundle that attaches to the logic board at the top. So, anytime the open or close limit switch goes to zero, we can infer that the door is fully open or closed.  (Except when the trolley is disengaged.)  You can also infer if both signals are 0V that the GDO is not powered up.
 
 ## Obstuction Sensor Signal
+Most obstructions sensors consist of a transmitter and receover that are placed across the bottom of the garage door. They are wired in parallel, and the connection is not polarized.
+ 
+The signal is not the typical x-volts or 0-volts. The signal is mostly high at 6-7 volts (will vary with model and wiring distance).  If there is NO obstruction, there will be a 600 microsecond 0 volt pulse every 150 milliseconds.  When obstructed, there is no pulse and the obstruction signal stays high. You won't see this using just a voltmeter - you'll get an "average" voltage.  This is the waveform of an unobstructed sensor signal.
+
 
 ## Door Close Button
 Grounding the Door Close signal is basically pushing the door button.  When programming, however, it is important to remember that if you hold the signal to ground for too long while closing (2 seconds?), the GDO will ignore the state of the obstruction sensor.  This can be dangerous, so it is essential to "pulse" the Door Close signal for 1/3 to 2/3 seconds.
