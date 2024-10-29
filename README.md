@@ -33,6 +33,7 @@ Most obstructions sensors consist of a transmitter and receover that are placed 
  
 The signal is not the typical x-volts or 0-volts. The signal is mostly high at 6-7 volts (will vary with model and wiring distance).  If there is NO obstruction, there will be a 600 microsecond 0 volt pulse every 150 milliseconds.  When obstructed, there is no pulse and the obstruction signal stays high. You won't see this using just a voltmeter - you'll get an "average" voltage.  This is the waveform of an unobstructed sensor signal.
 
+<img src="Images/ObstructionSignal.png" width=800>
 
 ## Door Close Button
 Grounding the Door Close signal is basically pushing the door button.  When programming, however, it is important to remember that if you hold the signal to ground for too long while closing (2 seconds?), the GDO will ignore the state of the obstruction sensor.  This can be dangerous, so it is essential to "pulse" the Door Close signal for 1/3 to 2/3 seconds.
@@ -43,7 +44,7 @@ In this project, I use hardware to limit the Door Close time to about 450 msec.
 
 
 
-
+##  COPIED TEXT NOT TO BE USED
 I live in Florida and that means rising temperatures in the summer, along with surging electric bills for cooling.
 
 A couple years back, my air conditioner had trouble keeping up with the hotter temperatures and seemed to run all the time.  By the time I got a technician out to look at it, most of the coolant had leaked out.  Refilling it was a big expense.  That got me thinking that I needed a better way to understand how the system was working.
