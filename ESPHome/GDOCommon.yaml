@@ -1,0 +1,389 @@
+    
+esphome:
+  name: $name
+  friendly_name: $friendlyName
+# output sympols to output.map for debugging. you can remove if not needed
+  platformio_options:
+    build_flags: 
+        - "-Wl,-Map,output.map"  
+
+#esp32: 
+#  board: nodemcu-32s
+#  framework: 
+#    type: arduino
+#    version: recommended
+
+esp8266:    
+  board: nodemcuv2
+  framework:
+    version: recommended
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_key
+
+  ap:
+    ssid: "$name"
+    password: !secret GDO_ap_wifi_key
+
+#captive_portal:
+
+logger:
+  baud_rate: 115200
+  level: debug
+
+api:
+   encryption:
+      key: !secret GDO_apikey
+ 
+#to use mqtt disable the api: section above. This enables you to use esphome with 
+#non homeassistant systems
+#modify the mqtt section to your needs
+#See: https://esphome.io/components/mqtt.html
+
+#mqtt:
+  #broker: 192.168.2.175
+  #port: 1883
+  #username: !secret mqtt_user
+  #password: !secret mqtt_pasword
+  #discovery_prefix: "homeassistant" 
+  #topic_prefix: $name
+       
+ota:
+  platform: esphome 
+  password:  $GDO_ota_password
+#  safe_mode: True
+
+time:
+ - platform: sntp
+
+web_server:
+  port: 80
+  ota: false
+  version: 3
+    
+# Define global variables to track some state stuff  
+#globals:
+#  # Enable DoorButton
+#  - id: enable_doorbutton
+#    type: bool
+#    restore_value: true
+#    initial_value: true
+          
+# Individual sensors
+sensor:
+      
+# Some Dianostic info
+  - platform: wifi_signal
+    name: "ESP Wifi Signal"
+#    update_interval: 60s
+
+
+binary_sensor:
+  - platform: gpio
+    name: "Open Motor On"
+    id: motoropening
+    pin: 
+      number: D1
+      inverted: true
+      mode:
+        input: true
+        pullup: false
+    filters:
+      - delayed_on: 59ms
+      - delayed_off: 50ms          
+    device_class: running
+    
+    
+  - platform: gpio
+    name: "Close Motor On"
+    id: motorclosing
+    pin: 
+      number: D5
+      inverted: true
+      mode:
+        input: true
+        pullup: false
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms          
+    device_class: running
+
+  - platform: gpio
+    name: "Opened"
+    id: opened
+    pin: 
+      number: D6
+      inverted: true
+      mode:
+        input: true
+        pullup: false
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms          
+    device_class: garage_door
+
+  - platform: gpio
+    name: "Closed"
+    id: closed
+    pin: 
+      number: D7
+      inverted: true
+      mode:
+        input: true
+        pullup: false
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms          
+    device_class: garage_door
+    
+  - platform: gpio
+    name: "Obstructed"
+    id: obstructed
+    pin: 
+      number: D2
+      mode:
+        input: true
+        pullup: false
+    filters:
+      - delayed_on: 100ms
+      - delayed_off: 100ms          
+    device_class: problem
+    
+# Create sensor with "powered on" status...
+# For this to be true, at least one of the motor opening/closing needs to be false
+# since they cannot be true at the same time.  If power is off, both of these
+# will provide zero volts and will read as opening & closing.
+  - platform: template
+    name: "Powered"
+    id: powered
+    lambda: |-
+      return (!(id(motorclosing).state && id(motoropening).state));
+    device_class: power
+    
+       
+# Device state:
+#   Cooling: Compressor On, Cool Mode On
+#   Heating: Compressor On, Cool Mode Off, Emergency/Aux Heat Off
+#   Heating w/Aux: Compressor On, Cool Mode Off, Emergency/Aux Heat On
+#   Fan Only: Compressor Off, Fan On
+#   Off:  Compressor Off, Fan Off
+#   Unknown: Anything not listed above  
+
+text_sensor:
+  
+  # Define a text sensor with an English description of the GDO state
+  - platform: template
+    name: State
+    id: state
+    lambda: |-
+      if (id(powered).state) {
+        // Powered up
+        if (id(opened).state)
+          {return {"Open"}; }
+        else if (id(closed).state)
+          {return {"Closed"};}
+        else if (id(motoropening).state)
+          {return {"Opening"};}
+        else if (id(motorclosing).state)
+          return {"Closing"};
+        else if (id(obstructed).state)
+          return {"Obstructed"};
+        else
+          return {"Partly Open"};
+      } else {
+        // Else apparently not powered up 
+        return {"No Power"};
+      }
+
+
+  # Lets add some sensors about this devices
+  - platform: wifi_info
+    ip_address:
+      name: ESP IP Address
+    ssid:
+      name: ESP SSID
+    bssid:
+      name: ESP BSSID
+    mac_address:
+      name: ESP Mac Wifi Address
+    dns_address:
+      name: ESP DNS Address
+
+  - platform: version
+    name: "ESPHome Version"
+    
+# Define a virtual switch which will enable/disable DoorButton operation
+switch:
+  - platform: template
+    name: "DoorButton Enable"
+    id: doorbutton_enable
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# Define the output we use to "push" the button (D8)
+output:
+  - platform: gpio
+    pin: GPIO15
+    #number: D8
+    id: gpio_button_push
+
+button:
+  - platform: output
+    name: "DoorButton"
+    id: "doorbutton"
+    output: gpio_button_push
+    duration: 300 ms
+    
+cover:
+  - platform: feedback
+    name: "DoorState"
+    id: "doorstate"
+    has_built_in_endstop: true
+    
+    
+    # Let's get some of the open behaviors
+    #  If obstructed, doesn't matter - that only affects closing
+    #  If already open, do nothing
+    #  If motor opening, do nothing
+    #  If motor closing, single toggle will switch to opening
+    #  If already closed, single toggle will switch to opening
+    #  If partially open, next toggle could go either way...
+    #    - If was closing before stop, toggle will open
+    #    - If was opening before stop, toggle will close
+    #    So, we need to figure out which direction was the most recent
+    open_duration: 12.5 sec
+    open_endstop: opened
+    open_sensor: motoropening
+    open_obstacle_sensor: obstructed
+    open_action:
+      - component.update: state
+      - logger.log:
+          format: "Open requested: door is %s"
+          args: ['id(state).state.c_str()']
+      - if:
+          condition:
+            - switch.is_off: doorbutton_enable
+          then:
+            # Door operation is not enabled
+            - logger.log: 'Not opening because DoorButton is disabled'
+          else:
+            # We are allowed to operate the door    
+            - if:
+                condition:
+                  or:
+                    - binary_sensor.is_on: motoropening
+                    - binary_sensor.is_on: opened
+                    - binary_sensor.is_off: powered
+                then:
+                  - logger.log: 'Not opening becasuse of state'
+                else:
+                  # Either the door is unknown, closed, closing or stopped.
+                  # Push the button once.to close, start opening, or get it moving
+                  - logger.log: 'Pushing button to open'
+                  - button.press: doorbutton
+                  - delay: 800 ms
+            
+                  # If that button push cause the door to start going down, put it again to reverse
+                  - if:
+                      condition:
+                        or:
+                          - binary_sensor.is_on: motorclosing
+                          - binary_sensor.is_on: closed
+                      then:
+                        - logger.log: 'Door closing after push, so pushing again'
+                        - button.press: doorbutton
+                        - delay: 450 ms
+            - component.update: state            
+        
+
+
+    # Behavior about closing...
+    #  If already closed, do nothing
+    #  If already closing, do nothing
+    #  If obstructed, do nothing
+    #  If not powered on, do nothing
+    #  If open, single toggle will close
+    #  If opening, single toggle will stop movement; second toggle needed to close
+    #  If stopped and partially open, depends on last movement:
+    #   - If was stopped while opening, next push will close
+    #   - If was stopped while closing, next push will open, so need 2 pushes
+    close_duration: 10 sec
+    close_endstop: closed
+    close_sensor: motorclosing
+    close_action:
+      - component.update: state
+      - logger.log:
+          format: "Close requested: door is %s"
+          args: ['id(state).state']
+      - if:
+          condition:
+            - switch.is_off: doorbutton_enable
+          then:
+            # Door operation is not enabled
+            - logger.log: 'Not closing because DoorButton is disabled'
+          else:
+            # We are allowed to operate the door    
+            - if:
+                condition:
+                  or:
+                    - binary_sensor.is_on: motorclosing
+                    - binary_sensor.is_on: closed
+                    - binary_sensor.is_on: obstructed
+                    - binary_sensor.is_off: powered
+                then:
+                  - logger.log: 'Not closing becasuse of state'
+                else:
+                  # Either the door is unknown, open, opening or stopped.
+                  # Push the button once.to close, stop opening, or get it moving
+                  # Wait a moment and, if the door is open or opening, then push it again
+                  - logger.log: 'Door open, opening, stopped or unknown, so pushing button'
+                  - button.press: doorbutton
+                  - delay: 200 ms
+                  - component.update: state
+
+                  - if:
+                      condition:
+                        or:
+                          - binary_sensor.is_on: opened
+                          - binary_sensor.is_on: motoropening
+                      then:
+                          - logger.log: 'Door open or still opening, so pushing button again'
+                          - delay: 400 ms
+                          - button.press: doorbutton
+                          - delay: 200 ms
+                          - component.update: state            
+
+
+
+    # Behaviors around stopping...
+    # If opening, push button
+    # If closing, push button.  If that causes door to open (reverse), push button again
+    # Anything else, do nothing
+    stop_action:
+      - component.update: state
+      - logger.log:
+          format: "Stop requested: door is %s"
+          args: ['id(state).state.c_str()']
+      - if:
+          condition:
+            - switch.is_off: doorbutton_enable
+          then:
+            # Door operation is not enabled
+            - logger.log: 'Not stopping because DoorButton is disabled'
+          else:
+            # We are allowed to operate the door    
+            - if:
+                condition:
+                  - binary_sensor.is_on: motorclosing
+                then:
+                  - logger.log: 'Door closing, so pushing button'
+                  - button.press: doorbutton
+                  - delay: 800 ms
+            - if:
+                condition:
+                  - binary_sensor.is_on: motoropening
+                then:
+                  - logger.log: 'Door opening, so pushing button again'
+                  - button.press: doorbutton
+            - component.update: state
