@@ -176,7 +176,7 @@ A "No Power" state is created if we find that both motor opening and motor closi
 ### DoorState Cover Sensor
 The doorstate sensor uses the feedback cover pattern.  This provides comprehensive logic to track open, opening, closed, closing and stopped states.  Provided with the door open time and door close time, it also reports door position between 0 and 100%. This sensor provides all the logic.
 
-In additiona, the cover feedabck sensor provides triggers for "open", "close" and "stop" operations.  Of course, this GDO doesn't have commands like that (unlike commercial door openers).  So for each of these actions, the current state of the world is checked and there is conditional code to implement each command by pressing the door button as needed to achieve the open, close or stop action. (Naturally, these are done only if the doorbutton_enable switch is enabled.)
+In addition, the cover feedback sensor provides triggers for "open", "close" and "stop" operations.  Of course, this GDO doesn't have commands like that (unlike commercial door openers).  So for each of these actions, the current state of the world is checked and there is conditional code to implement each command by pressing the door button as needed to achieve the open, close or stop action. (Naturally, these are done only if the doorbutton_enable switch is enabled.)
 
 ### Miscellaneous Sensors
 They yaml defined a bunch of environmental sensors about the version of ESPHome and WiFi information.
