@@ -1,0 +1,8 @@
+# Build a Garage Door Monitor for 586
+
+substitutions:
+  name: "gdo586"                   #unique network name, system name
+  friendlyName: "GDO Monitor 586"  #used as the friendly name of your application in HomeAssistant
+    
+    
+<<: !include GDOCommon.yaml
