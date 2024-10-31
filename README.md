@@ -66,7 +66,7 @@ Buzzing out the board, I found all the proper places to connect, and just solder
 ### Power and Ground
 The common (ground) signal can be found all over the board, but the easeiest place to find and connect to is the center screw terminal.
 
-Power is easily located by finding the 330uF capacitor that is part of the 24V power supply. The only reason to pick up the 24V power is if you want to power the ESP board directly from the GDO.  Use a buck converter to convert 24V to 5V for the ESP.  
+Power is easily located by finding the positive lead on the 330uF capacitor that is part of the 24V power supply. The only reason to pick up the 24V power is if you want to power the ESP board directly from the GDO.  Use a buck converter to convert 24V to 5V for the ESP.  
 
 If you provide power directly to the ESP using the USB connection, there is no need to pick up 24V power so H1, H2 and the converter can be left off the board.
 
@@ -106,7 +106,7 @@ This project uses an ESP8266 (Wemos D1 mini)board.
 Some notes on the project design:
 
 ### Power
-The project bord can be powered either from the GDO or via USB cable.
+The project board can be powered either from the GDO or via USB cable.
 
 When powering from the GDO, a buck converter drops the voltage from 24V to 5V for the ESP.
 
@@ -133,7 +133,7 @@ To operate the GDO, it's simply enough to bring the door button signal to ground
 When D8 is asserted, pullup R16 turns Q3 on to pull the door button signal low.  Slowly, R18 charges C2 until the voltage is high enough to enable Q4.  That then pulls Q3 base low, turning off Q3.  Even if D8 stays high, the door button signal remains ungrounded.  R17 and D3 provide a quick discharge of C2 when D8 goes low
 
 ## Construction
-There are a lot of parts, so it was a lot easier to prepare a PC board for this project.  (Thank you nextpcb.com for under $20).  I also have more than one GDO, so having a PC board will really speed assumbly.
+There are a lot of parts, so it was a lot easier to prepare a PC board for this project.  (Thank you nextpcb.com for 5 boards for under $20).  I also have more than one GDO, so having a PC board will really speed assembly.
 
 Also, if you mount the project board directly on the GDO supports, the constant vibration could be a problem with manually-wired construction.
 
@@ -174,7 +174,7 @@ The templated text sensor, state, simply looks at all the inputs and derives a s
 A "No Power" state is created if we find that both motor opening and motor closing inputs are low. Clearly, when the GDO is powered, at least one of these has to be high. If both are low, the conclusing we can draw is that the GDO ispowered off (or disconnected).  Of course, this only works if the GDO board is powered via USB.
 
 ### DoorState Cover Sensor
-The doorstate sensor uses the feedback cover pattern.  This provides comprehensive logic to track open, opening, closed, closing and stopped states.  Provided with the door open time and door close time, it also reports door position between 0 and 100%. This sensor provides all the logic.
+The doorstate sensor uses the feedback template cover.  This provides comprehensive logic to track open, opening, closed, closing and stopped states.  Provided with the door open time and door close time, it also reports door position between 0 and 100%. This sensor provides all the logic.
 
 In addition, the cover feedback sensor provides triggers for "open", "close" and "stop" operations.  Of course, this GDO doesn't have commands like that (unlike commercial door openers).  So for each of these actions, the current state of the world is checked and there is conditional code to implement each command by pressing the door button as needed to achieve the open, close or stop action. (Naturally, these are done only if the doorbutton_enable switch is enabled.)
 
@@ -185,6 +185,8 @@ They yaml defined a bunch of environmental sensors about the version of ESPHome 
 Some changes are going to be required for this project to be ported to different GDOs:
 * Set your own yaml secrets and device name
 * Configure the power source: from GDO for USB
+* Set the open and closing times for the doorstate sensor
+* Set up proper security if using the web interface
 
 ## Things I Wish I'd Thought Of
 My biggest regret is not providing an output to drive a lamp or buzzer to warn people after calling for the GDO to open or close.  I would have had the lamp and/or buzzer activated for a few seconds before actually operating the door.
