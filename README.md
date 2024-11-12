@@ -1,6 +1,13 @@
 # GDO
 Garage Door Opener - Monitor and Control using ESPHome - Hardwired
 
+### Revision 2
+After using this for a while, I noticed that the Obstructed signal was sometimes wrong.  I had been using a diode (originally D1) to add some voltage drop while feeding a GPIO.  Turns out this led to a floating input which gives unpredictable results. D1 has been replaced with a resistor.
+
+Also, on a second unit, the door Open signal was occasionally wrong.  Checking further, I found the open and close signals were dropping from their original 5V vales to 3-4 volts.  Could have been from when I added connectors between the GDO and this board, or that there is very little current in that circuit.  Fixed by raising the resistance of the voltage divider.
+
+The rest of the README has been updated to reflect this.
+
 ## Old Liftmaster GDO
 My house is approaching 30 years old and has the original Liftmaster garage door opener (GDO).
 
@@ -101,7 +108,7 @@ The signal is readily accessed from the door button screw terminal.
 ## The ESP Circuit Board
 This project uses an ESP8266 (Wemos D1 mini)board.  
 
-<img src="Board/Schematic_Liftmaster-Direct-GDO_2024-10-29.png" width=800>
+<img src="Board/Schematic_Liftmaster-Direct-GDO_2024-11-11.png" width=800>
 
 Some notes on the project design:
 
@@ -114,15 +121,15 @@ H1 allows the buck converter to get power from the GDO. H2 allows the ESP to be 
 
 ### Signal Level Adjustment
 The input signals are of varying voltages.
-* R1-R4 are voltage dividers to bring the relay coil volatage from 24V to under 3.3V
-* R5-R8 are voltage dividers to bring the limit switch volatage from 5V to under 3.3V
+* R1-R4 are voltage dividers to bring the relay coil volatage from 24V to under 3.3V.
+* R5-R8 are voltage dividers to bring the limit switch volatage from 5V to under 3.3V. Seems the current in the sensor is quite limited, so these resistors need to be rather high to prevent excessive voltage drop.
 * R10-R11 and D1 are voltage dividers to bring the obstruction voltage from 6V to about 0.5V.
 * Headers H1, H2 and the LM2596 (buck converter) are optional and can use the 24V power from the GDO to power the board. Alternately, the board can be USB-powered through the ESP.
 
 ### Processing the Obstruction Signal
 While the obstruction signal could have been connected to the ESP (with a proper voltage divider, of course) directly, I've used a simple circuit to provide a low signal to the ESP as long as pulses are present and a high signal shortly after they stop.  The eliminates the 150 pulses per second that the ESP has to process in software.
 
-Basically, Q1 inverts the obstruction signal, creating positive pulses rather than 0V pulses. As long as the obstruction signal is high, Q2 is off, allowing C1 to charge slowly through R13. When a pulse comes along, however, pullup R16 turns Q2 on which discharges C1.  As long as the pulse train continues, C1 never charges enough to present a high signal to the ESP.  Diodes D1 and D2 are just there to provide further voltage drops.
+Basically, Q1 inverts the obstruction signal, creating positive pulses rather than 0V pulses. As long as the obstruction signal is high, Q2 is off, allowing C1 to charge slowly through R13. When a pulse comes along, however, pullup R16 turns Q2 on which discharges C1.  As long as the pulse train continues, C1 never charges enough to present a high signal to the ESP.  Diode D2 is just there to provide further voltage drops. R17 is present just to prevent too much current in the case that C1 must fullly discharge into the GPIO pin - a possible programming error.
 
 When obstructed, however, Q2 never switches on and C1 is never discharged.  Eventually the voltage is high enough to be read as a high signal by the ESP.
 
