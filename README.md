@@ -108,7 +108,7 @@ The signal is readily accessed from the door button screw terminal.
 ## The ESP Circuit Board
 This project uses an ESP8266 (Wemos D1 mini)board.  
 
-<img src="Board/Schematic_Liftmaster-Direct-GDO_2024-11-11.png" width=800>
+<img src="Board/GDO Rev 2.png" width=800>
 
 Some notes on the project design:
 
